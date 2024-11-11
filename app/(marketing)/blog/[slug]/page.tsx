@@ -8,6 +8,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+// Define the Post type
 type Post = {
   metadata: {
     title: string;
@@ -18,22 +19,21 @@ type Post = {
   };
   slug: string;
   source: string;
-}
+};
 
-type GenerateMetadataProps = {
-  params: { slug: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-}
-
+// Adjust generateMetadata to handle params as a Promise
 export async function generateMetadata({
   params,
-}: GenerateMetadataProps): Promise<Metadata> {
-  const post = await getPost(params.slug);
-  
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getPost(slug);
+
   if (!post) {
     return {
-      title: 'Not Found',
-      description: 'The page you are looking for does not exist.'
+      title: "Not Found",
+      description: "The page you are looking for does not exist.",
     };
   }
 
@@ -53,11 +53,7 @@ export async function generateMetadata({
       type: "article",
       publishedTime,
       url: `${siteConfig.url}/blog/${post.slug}`,
-      images: [
-        {
-          url: image || '',
-        },
-      ],
+      images: image ? [{ url: image }] : [],
     },
     twitter: {
       card: "summary_large_image",
@@ -68,14 +64,15 @@ export async function generateMetadata({
   };
 }
 
-type PageProps = {
-  params: { slug: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
-}
+// Adjust BlogPost to handle params as a Promise
+export default async function BlogPost({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const post = await getPost(slug);
 
-export default async function BlogPost({ params }: PageProps) {
-  const post = await getPost(params.slug);
-  
   if (!post) {
     notFound();
   }

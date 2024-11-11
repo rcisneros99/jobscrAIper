@@ -13,13 +13,7 @@ import { BorderBeam } from '@/components/magicui/border-beam';
 interface SearchResult {
   id: string;
   companyName: string;
-  jobs: Array<{
-    id: string;
-    title: string;
-    location: string;
-    description: string;
-    applicationUrl: string;
-  }>;
+  jobs: any[];
 }
 
 interface SearchHistoryItem {
@@ -35,6 +29,16 @@ interface SearchHistoryItem {
   searchResults: SearchResult[];
 }
 
+interface Search {
+  timestamp: string;
+  query: {
+    position: string;
+    location: string;
+    industry: string;
+  };
+  results: SearchResult[];
+}
+
 export default function ProfilePage() {
   const { isLoaded, isSignedIn, user } = useUser();
   const [isLoading, setIsLoading] = useState(true);
@@ -48,6 +52,7 @@ export default function ProfilePage() {
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
   const [expandedSearches, setExpandedSearches] = useState<Record<string, boolean>>({});
   const [expandedCompanies, setExpandedCompanies] = useState<Record<string, boolean>>({});
+  const [searches, setSearches] = useState<Search[]>([]);
 
   const fetchApiKeys = async () => {
     try {
@@ -158,12 +163,23 @@ export default function ProfilePage() {
   };
 
   const downloadAllSearchResults = () => {
-    const allJobs = searchHistory.flatMap(search => ({
-      timestamp: search.timestamp,
-      query: search.searchQuery,
-      results: search.searchResults
-    }));
-    downloadSearchResults({ searchResults: allJobs }, 'all-search-results.csv');
+    const allJobs: SearchResult[] = searches.flatMap((search) => search.results);
+    
+    // Create a complete SearchHistoryItem object
+    const combinedSearchHistory: SearchHistoryItem = {
+      id: 'all-searches',
+      searchQuery: {
+        position: 'All Positions',
+        location: 'All Locations',
+        industry: 'All Industries'
+      },
+      timestamp: new Date().toISOString(),
+      searchTime: 0,
+      resultsCount: allJobs.length,
+      searchResults: allJobs
+    };
+
+    downloadSearchResults(combinedSearchHistory, 'all-search-results.csv');
   };
 
   if (!isLoaded || !isSignedIn) {

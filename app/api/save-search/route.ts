@@ -15,10 +15,33 @@ export async function POST(req: Request) {
       data: {
         userId,
         searchQuery: data.searchQuery,
-        results: data.results,
         resultsCount: data.resultsCount,
         searchTime: data.searchTime,
+        searchResults: {
+          create: data.results.map((result: any) => ({
+            companyName: result.companyName,
+            careerPageUrl: result.careerPageUrl || null,
+            jobs: {
+              create: (result.jobs || []).map((job: any) => ({
+                userId,
+                title: job.title,
+                location: job.location,
+                description: job.description,
+                applicationUrl: job.applicationUrl,
+                requirements: job.requirements || null,
+                additionalInfo: job.additionalInfo || null
+              }))
+            }
+          }))
+        }
       },
+      include: {
+        searchResults: {
+          include: {
+            jobs: true
+          }
+        }
+      }
     });
 
     return NextResponse.json(searchHistory);

@@ -24,9 +24,11 @@ model SearchHistory {
   id            String   @id @default(cuid())
   userId        String
   searchQuery   Json
-  timestamp     DateTime @default(now())
-  searchTime    Float
+  results       Json
   resultsCount  Int
+  searchTime    Float
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   searchResults SearchResult[]
   user          User     @relation(fields: [userId], references: [id])
 }
