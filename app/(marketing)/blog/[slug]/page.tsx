@@ -20,11 +20,16 @@ type Post = {
   source: string;
 }
 
+interface Props {
+  params: {
+    slug: string;
+  };
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
 export async function generateMetadata({
   params,
-}: {
-  params: { slug: string };
-}): Promise<Metadata> {
+}: Props): Promise<Metadata> {
   const post = await getPost(params.slug);
   
   if (!post) {
@@ -67,9 +72,8 @@ export async function generateMetadata({
 
 export default async function BlogPost({
   params,
-}: {
-  params: { slug: string };
-}) {
+  searchParams,
+}: Props) {
   const post = await getPost(params.slug);
   
   if (!post) {
