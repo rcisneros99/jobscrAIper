@@ -47,13 +47,15 @@ export async function generateMetadata({
   };
 }
 
+interface PageProps {
+  params: {
+    slug: string
+  }
+}
+
 export default async function Blog({
   params,
-}: {
-  params: {
-    slug: string;
-  };
-}) {
+}: PageProps) {
   let post = await getPost(params.slug);
   if (!post) {
     notFound();
