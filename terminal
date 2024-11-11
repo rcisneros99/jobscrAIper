@@ -1,0 +1,12 @@
+mkdir -p public/blog/images 
+# Download or create some placeholder images
+touch public/blog/images/graduate-guide.jpg
+touch public/blog/images/ai-job-search.jpg
+touch public/blog/images/internship-guide.jpg
+touch public/blog/images/student-resume.jpg
+touch public/blog/images/application-success.jpg 
+npm install shiki rehype-pretty-code rehype-stringify remark-gfm remark-parse remark-rehype unified hast-util-to-string unist-util-visit parse-numeric-range 
+mkdir -p content/blog
+mv content/*.mdx content/blog/ 
+mkdir -p scripts/utils 
+pip install -r scripts/requirements.txt 

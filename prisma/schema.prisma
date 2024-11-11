@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String         @id
+  email         String        @unique
+  openaiKey     String?
+  googleApiKey  String?
+  googleCseId   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  searchHistory SearchHistory[]
+  jobs          Job[]
+}
+
+model SearchHistory {
+  id            String   @id @default(cuid())
+  userId        String
+  searchQuery   Json
+  timestamp     DateTime @default(now())
+  searchTime    Float
+  resultsCount  Int
+  searchResults SearchResult[]
+  user          User     @relation(fields: [userId], references: [id])
+}
+
+model SearchResult {
+  id              String   @id @default(cuid())
+  searchHistoryId String
+  companyName     String
+  careerPageUrl   String?
+  jobs            Job[]
+  createdAt       DateTime @default(now())
+  searchHistory   SearchHistory @relation(fields: [searchHistoryId], references: [id])
+}
+
+model Job {
+  id                     String   @id @default(cuid())
+  searchResultId         String
+  title                  String
+  location              String
+  description          String
+  applicationUrl       String
+  requirements        Json?
+  additionalInfo      Json?
+  createdAt           DateTime  @default(now())
+  searchResult        SearchResult @relation(fields: [searchResultId], references: [id])
+  savedBy             SavedJob[]
+  userId              String
+  user                User     @relation(fields: [userId], references: [id])
+}
+
+model SavedJob {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  jobId       String
+  job         Job      @relation(fields: [jobId], references: [id])
+  savedAt     DateTime @default(now())
+
+  @@unique([userId, jobId])
+}
