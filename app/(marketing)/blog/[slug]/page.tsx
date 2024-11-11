@@ -8,15 +8,33 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+type Post = {
+  metadata: {
+    title: string;
+    publishedAt: string;
+    summary: string;
+    image?: string;
+    author: string;
+  };
+  slug: string;
+  source: string;
+}
+
 export async function generateMetadata({
   params,
 }: {
-  params: {
-    slug: string;
-  };
-}): Promise<Metadata | undefined> {
-  let post = await getPost(params.slug);
-  let {
+  params: { slug: string };
+}): Promise<Metadata> {
+  const post = await getPost(params.slug);
+  
+  if (!post) {
+    return {
+      title: 'Not Found',
+      description: 'The page you are looking for does not exist.'
+    };
+  }
+
+  const {
     title,
     publishedAt: publishedTime,
     summary: description,
@@ -34,7 +52,7 @@ export async function generateMetadata({
       url: `${siteConfig.url}/blog/${post.slug}`,
       images: [
         {
-          url: image,
+          url: image || '',
         },
       ],
     },
@@ -42,24 +60,22 @@ export async function generateMetadata({
       card: "summary_large_image",
       title,
       description,
-      images: [image],
+      images: image ? [image] : [],
     },
   };
 }
 
-interface PageProps {
-  params: {
-    slug: string
-  }
-}
-
-export default async function Blog({
+export default async function BlogPost({
   params,
-}: PageProps) {
-  let post = await getPost(params.slug);
+}: {
+  params: { slug: string };
+}) {
+  const post = await getPost(params.slug);
+  
   if (!post) {
     notFound();
   }
+
   return (
     <section id="blog">
       <script
