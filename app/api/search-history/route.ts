@@ -5,54 +5,57 @@ import { NextRequest } from 'next/server';
 
 export async function GET(req: NextRequest) {
   try {
-    const { userId } = getAuth(req);
+    const auth = getAuth(req);
+    const userId = auth.userId;
+
     if (!userId) {
       return NextResponse.json({ 
-        success: false,
+        success: false, 
         error: 'Unauthorized' 
       }, { status: 401 });
     }
 
-    const searchHistory = await prisma.searchHistory.findMany({
-      where: { userId },
-      orderBy: { timestamp: 'desc' },
-      include: {
-        searchResults: {
-          include: {
-            jobs: true
+    await prisma.$connect();
+
+    // Get unique search histories with their results
+    const searchHistory = await prisma.$transaction(async (tx) => {
+      return await tx.searchHistory.findMany({
+        where: { userId },
+        orderBy: { timestamp: 'desc' },
+        include: {
+          searchResults: {
+            distinct: ['companyName'], // Add distinct constraint
+            include: {
+              jobs: true
+            }
           }
         }
-      }
+      });
     });
 
-    if (!searchHistory) {
-      return NextResponse.json({ 
-        success: true, 
-        data: [] 
-      });
-    }
+    await prisma.$disconnect();
+
+    // Clean up any duplicate results
+    const cleanedHistory = searchHistory.map(history => ({
+      ...history,
+      searchResults: Array.from(
+        new Map(
+          history.searchResults.map(result => [result.companyName, result])
+        ).values()
+      )
+    }));
 
     return NextResponse.json({ 
       success: true, 
-      data: searchHistory.map(search => ({
-        id: search.id,
-        searchQuery: search.searchQuery,
-        timestamp: search.timestamp,
-        searchTime: search.searchTime,
-        resultsCount: search.resultsCount,
-        searchResults: search.searchResults?.map(result => ({
-          id: result.id,
-          companyName: result.companyName,
-          jobs: result.jobs
-        })) || []
-      }))
+      data: cleanedHistory 
     });
 
   } catch (error) {
-    console.error('Search history error:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Internal Server Error' 
+    console.error('Search history error:', error instanceof Error ? error.message : 'Unknown error');
+    await prisma.$disconnect();
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Internal Server Error'
     }, { status: 500 });
   }
 }
